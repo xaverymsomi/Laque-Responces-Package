@@ -10,7 +10,6 @@ use LaqueResponses\Support\Status;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamFactoryInterface;
-use Psr\Http\Message\StreamInterface;
 use RuntimeException;
 
 /**
@@ -30,7 +29,7 @@ final class StreamResponseBuilder
 
     /**
      * Create a streaming response
-     * 
+     *
      * @param callable $writer Function that writes to the stream
      * @param int $status HTTP status code
      * @param string $contentType Content type
@@ -45,26 +44,26 @@ final class StreamResponseBuilder
     ): ResponseInterface {
         // Create empty stream
         $body = $this->streamFactory->createStream();
-        
+
         // Write content to stream using the provided callback
         $writer($body);
-        
+
         // Rewind stream for reading
         if ($body->isSeekable()) {
             $body->rewind();
         }
-        
+
         // Create response with the stream
         $response = $this->responseFactory->createResponse($status)
             ->withBody($body)
             ->withHeader(Headers::CONTENT_TYPE, $contentType);
-        
+
         // Add all other headers
         foreach ($headers as $name => $value) {
             if ($name === Headers::CONTENT_TYPE) {
                 continue; // Already set
             }
-            
+
             if (is_array($value)) {
                 foreach ($value as $v) {
                     if (Headers::isSafe($v)) {
@@ -75,13 +74,13 @@ final class StreamResponseBuilder
                 $response = $response->withHeader($name, $value);
             }
         }
-        
+
         return $response;
     }
 
     /**
      * Send a file as a response
-     * 
+     *
      * @param string $path Path to the file
      * @param string|null $downloadName Name for the download, null to use original name
      * @param string|null $contentType Content type, null to detect from file extension
@@ -96,41 +95,41 @@ final class StreamResponseBuilder
         bool $asAttachment = true
     ): ResponseInterface {
         // Check if file exists and is readable
-        if (!file_exists($path) || !is_readable($path)) {
+        if (! file_exists($path) || ! is_readable($path)) {
             throw new RuntimeException("File not found or not readable: {$path}");
         }
-        
+
         // Determine content type if not provided
         $effectiveContentType = $contentType ?? ContentType::fromFilePath($path);
-        
+
         // Determine download name
         $fileName = $downloadName ?? basename($path);
-        
+
         // Create stream from file
         $stream = $this->streamFactory->createStreamFromFile($path);
-        
+
         // Set headers for file download
         $headers = [];
-        
+
         // Set Content-Disposition header
-        $headers[Headers::CONTENT_DISPOSITION] = Headers::contentDisposition($fileName, !$asAttachment);
-        
+        $headers[Headers::CONTENT_DISPOSITION] = Headers::contentDisposition($fileName, ! $asAttachment);
+
         // Set Content-Length if available
         $fileSize = filesize($path);
         if ($fileSize !== false) {
             $headers[Headers::CONTENT_LENGTH] = (string) $fileSize;
         }
-        
+
         // Create response
         $response = $this->responseFactory->createResponse(Status::OK)
             ->withBody($stream)
             ->withHeader(Headers::CONTENT_TYPE, $effectiveContentType);
-        
+
         // Add all other headers
         foreach ($headers as $name => $value) {
             $response = $response->withHeader($name, $value);
         }
-        
+
         return $response;
     }
 }

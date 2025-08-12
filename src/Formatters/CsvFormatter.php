@@ -42,50 +42,50 @@ final class CsvFormatter implements ResponseFormatterInterface
     public function format(array|object|string|int|float|bool|null $payload): string
     {
         // Only arrays can be converted to CSV
-        if (!is_array($payload)) {
+        if (! is_array($payload)) {
             if (is_object($payload)) {
                 $payload = ArrayUtils::objectToArray($payload);
             } else {
                 throw new RuntimeException('CSV formatter requires array data');
             }
         }
-        
+
         // Handle empty array
         if (empty($payload)) {
             return '';
         }
-        
+
         // Create a memory stream for CSV
         $stream = fopen('php://temp', 'r+');
-        
+
         if ($stream === false) {
             throw new RuntimeException('Failed to open temporary stream for CSV formatting');
         }
-        
+
         try {
             // If not already a list of rows, wrap in array
             $rows = ArrayUtils::isAssociative($payload) ? [$payload] : $payload;
-            
+
             // Extract headers from first row
             $headers = array_keys($rows[0] ?? []);
-            
+
             // Write headers if requested
-            if ($this->includeHeaders && !empty($headers)) {
+            if ($this->includeHeaders && ! empty($headers)) {
                 fputcsv($stream, $headers, $this->delimiter, $this->enclosure, $this->escapeChar);
             }
-            
+
             // Write data rows
             foreach ($rows as $row) {
                 // Normalize to array if object
                 if (is_object($row)) {
                     $row = ArrayUtils::objectToArray($row);
                 }
-                
+
                 // Skip non-array rows
-                if (!is_array($row)) {
+                if (! is_array($row)) {
                     continue;
                 }
-                
+
                 // Ensure all rows have the same structure
                 if ($this->includeHeaders) {
                     $data = [];
@@ -97,15 +97,15 @@ final class CsvFormatter implements ResponseFormatterInterface
                     fputcsv($stream, $row, $this->delimiter, $this->enclosure, $this->escapeChar);
                 }
             }
-            
+
             // Get content as string
             rewind($stream);
             $content = stream_get_contents($stream);
-            
+
             if ($content === false) {
                 throw new RuntimeException('Failed to read CSV content from stream');
             }
-            
+
             return $content;
         } finally {
             fclose($stream);

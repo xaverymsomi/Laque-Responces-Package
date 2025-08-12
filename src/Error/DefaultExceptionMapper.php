@@ -15,7 +15,7 @@ final class DefaultExceptionMapper implements ExceptionMapperInterface
      * Base URI for problem types
      */
     private string $baseTypeUri;
-    
+
     /**
      * @param string $baseTypeUri Base URI for problem types (e.g., 'https://problems.example.com/')
      */
@@ -36,69 +36,69 @@ final class DefaultExceptionMapper implements ExceptionMapperInterface
                 'type' => $this->baseTypeUri . 'domain-error',
                 'title' => 'Domain Error',
                 'status' => Status::BAD_REQUEST,
-                'extensions' => []
+                'extensions' => [],
             ],
-            
+
             // Authentication exception (framework-specific names commented)
             // $e instanceof \AuthenticationException
             $e instanceof \RuntimeException && str_contains(get_class($e), 'Auth') => [
                 'type' => $this->baseTypeUri . 'auth-required',
                 'title' => 'Authentication Required',
                 'status' => Status::UNAUTHORIZED,
-                'extensions' => []
+                'extensions' => [],
             ],
-            
+
             // Authorization exception
             // $e instanceof \AuthorizationException
             $e instanceof \RuntimeException && str_contains(get_class($e), 'Authorization') => [
                 'type' => $this->baseTypeUri . 'not-allowed',
                 'title' => 'Not Allowed',
                 'status' => Status::FORBIDDEN,
-                'extensions' => []
+                'extensions' => [],
             ],
-            
+
             // Not found exception
             // $e instanceof \ResourceNotFoundException
             $e instanceof \RuntimeException && str_contains(get_class($e), 'NotFound') => [
                 'type' => $this->baseTypeUri . 'not-found',
                 'title' => 'Not Found',
                 'status' => Status::NOT_FOUND,
-                'extensions' => []
+                'extensions' => [],
             ],
-            
+
             // Validation exception
             // $e instanceof \ValidationException
             $e instanceof \RuntimeException && str_contains(get_class($e), 'Validation') => [
                 'type' => $this->baseTypeUri . 'validation-error',
                 'title' => 'Validation Failed',
                 'status' => Status::UNPROCESSABLE_ENTITY,
-                'extensions' => $this->extractValidationErrors($e)
+                'extensions' => $this->extractValidationErrors($e),
             ],
-            
+
             // Default case for unknown exceptions
             default => [
                 'type' => 'about:blank',
                 'title' => 'Internal Server Error',
                 'status' => Status::INTERNAL_SERVER_ERROR,
-                'extensions' => []
+                'extensions' => [],
             ]
         };
-        
+
         // Include details only in debug mode for 500 errors
-        if ($mapping['status'] >= 500 && !$debug) {
+        if ($mapping['status'] >= 500 && ! $debug) {
             $detail = null;
         } else {
             $detail = $e->getMessage();
         }
-        
+
         // Add stack trace in debug mode
         if ($debug) {
             $mapping['extensions']['trace'] = $this->formatTrace($e);
         }
-        
+
         // Add a unique error reference ID
         $mapping['extensions']['error_ref'] = $this->generateErrorRef();
-        
+
         return [
             'type' => $mapping['type'],
             'title' => $mapping['title'],
@@ -107,7 +107,7 @@ final class DefaultExceptionMapper implements ExceptionMapperInterface
             'extensions' => $mapping['extensions'],
         ];
     }
-    
+
     /**
      * Format exception trace for human readability
      */
@@ -120,7 +120,7 @@ final class DefaultExceptionMapper implements ExceptionMapperInterface
             'trace' => array_slice(explode("\n", $e->getTraceAsString()), 0, 15), // Limit trace lines
         ];
     }
-    
+
     /**
      * Generate a unique error reference ID
      */
@@ -128,7 +128,7 @@ final class DefaultExceptionMapper implements ExceptionMapperInterface
     {
         return bin2hex(random_bytes(8)); // 16 character hex string
     }
-    
+
     /**
      * Extract validation errors from exception
      */
@@ -136,17 +136,17 @@ final class DefaultExceptionMapper implements ExceptionMapperInterface
     {
         // Try to get validation errors from common validation exception formats
         $errors = [];
-        
+
         // Check for ->errors() method on validation exceptions
         if (method_exists($e, 'errors')) {
             $errors = $e->errors();
         }
-        
+
         // Check for ->getErrors() method on validation exceptions
         if (empty($errors) && method_exists($e, 'getErrors')) {
             $errors = $e->getErrors();
         }
-        
+
         return ['errors' => $errors];
     }
 }

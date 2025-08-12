@@ -64,10 +64,10 @@ JSON;
     {
         $formatter = new JsonFormatter();
         $data = ['invalid' => NAN];
-        
+
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('JSON encoding failed');
-        
+
         $formatter->format($data);
     }
 }

@@ -36,7 +36,7 @@ final class ExceptionToProblemMiddleware implements MiddlewareInterface
         } catch (Throwable $e) {
             // Use the request URI as the problem instance URI
             $instance = $request->getUri()->__toString();
-            
+
             // Create a problem details response
             return $this->problemFactory->from($e, $instance);
         }

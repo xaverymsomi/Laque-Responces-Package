@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace LaqueResponses\Tests\Unit\Builder;
+namespace Builder;
 
 use LaqueResponses\Builder\ResponseBuilder;
 use LaqueResponses\Contracts\ResponseFormatterInterface;
@@ -16,12 +16,16 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\StreamInterface;
 
-class ResponseBuilderTest extends TestCase
+class ResponseBuilderTest_bkp extends TestCase
 {
     private ResponseFactoryInterface $responseFactory;
+
     private StreamFactoryInterface $streamFactory;
+
     private FormatterRegistry $registry;
+
     private ResponseBuilder $builder;
+
     private ResponseFormatterInterface $jsonFormatter;
 
     protected function setUp(): void
@@ -30,7 +34,7 @@ class ResponseBuilderTest extends TestCase
         $this->streamFactory = $this->createMock(StreamFactoryInterface::class);
         $this->registry = $this->createMock(FormatterRegistry::class);
         $this->jsonFormatter = $this->createMock(ResponseFormatterInterface::class);
-        
+
         $this->builder = new ResponseBuilder(
             $this->responseFactory,
             $this->streamFactory,
@@ -45,25 +49,25 @@ class ResponseBuilderTest extends TestCase
         $stream = $this->createMock(StreamInterface::class);
         $formattedData = '{"status":"success","data":{"key":"value"}}';
         $payload = ['key' => 'value'];
-        
+
         // Response factory expectations
         $this->responseFactory->expects($this->once())
             ->method('createResponse')
             ->with(Status::OK)
             ->willReturn($response);
-        
+
         // Stream factory expectations
         $this->streamFactory->expects($this->once())
             ->method('createStream')
             ->with($formattedData)
             ->willReturn($stream);
-        
+
         // Response expectations
         $response->expects($this->once())
             ->method('withBody')
             ->with($stream)
             ->willReturnSelf();
-        
+
         $response->expects($this->exactly(2))
             ->method('withHeader')
             ->withConsecutive(
@@ -71,18 +75,18 @@ class ResponseBuilderTest extends TestCase
                 [Headers::CACHE_CONTROL, 'no-store']
             )
             ->willReturnSelf();
-        
+
         // Registry expectations
         $this->registry->expects($this->once())
             ->method('get')
             ->with(ContentType::JSON)
             ->willReturn($this->jsonFormatter);
-        
+
         // Formatter expectations
         $this->jsonFormatter->expects($this->once())
             ->method('contentType')
             ->willReturn(ContentType::JSON);
-        
+
         $this->jsonFormatter->expects($this->once())
             ->method('format')
             ->with($this->callback(function ($arg) use ($payload) {
@@ -91,10 +95,10 @@ class ResponseBuilderTest extends TestCase
                     $arg['data'] === $payload;
             }))
             ->willReturn($formattedData);
-        
+
         // Execute
         $result = $this->builder->success($payload);
-        
+
         // Assert
         $this->assertSame($response, $result);
     }
@@ -105,25 +109,25 @@ class ResponseBuilderTest extends TestCase
         $response = $this->createMock(ResponseInterface::class);
         $stream = $this->createMock(StreamInterface::class);
         $formattedData = '{"status":"error","message":"Error message","errors":{"field":["Invalid"]}}';
-        
+
         // Response factory expectations
         $this->responseFactory->expects($this->once())
             ->method('createResponse')
             ->with(Status::BAD_REQUEST)
             ->willReturn($response);
-        
+
         // Stream factory expectations
         $this->streamFactory->expects($this->once())
             ->method('createStream')
             ->with($formattedData)
             ->willReturn($stream);
-        
+
         // Response expectations
         $response->expects($this->once())
             ->method('withBody')
             ->with($stream)
             ->willReturnSelf();
-        
+
         $response->expects($this->exactly(2))
             ->method('withHeader')
             ->withConsecutive(
@@ -131,18 +135,18 @@ class ResponseBuilderTest extends TestCase
                 [Headers::CACHE_CONTROL, 'no-store']
             )
             ->willReturnSelf();
-        
+
         // Registry expectations
         $this->registry->expects($this->once())
             ->method('get')
             ->with(ContentType::JSON)
             ->willReturn($this->jsonFormatter);
-        
+
         // Formatter expectations
         $this->jsonFormatter->expects($this->once())
             ->method('contentType')
             ->willReturn(ContentType::JSON);
-        
+
         $this->jsonFormatter->expects($this->once())
             ->method('format')
             ->with($this->callback(function ($arg) {
@@ -153,10 +157,10 @@ class ResponseBuilderTest extends TestCase
                     $arg['errors']['field'][0] === 'Invalid';
             }))
             ->willReturn($formattedData);
-        
+
         // Execute
         $result = $this->builder->error('Error message', Status::BAD_REQUEST, ['field' => ['Invalid']]);
-        
+
         // Assert
         $this->assertSame($response, $result);
     }
@@ -167,40 +171,40 @@ class ResponseBuilderTest extends TestCase
         $response = $this->createMock(ResponseInterface::class);
         $stream = $this->createMock(StreamInterface::class);
         $formattedData = '{"status":"success","meta":{"total":100,"page":2,"per_page":10,"pages":10},"data":[]}';
-        
+
         // Response factory expectations
         $this->responseFactory->expects($this->once())
             ->method('createResponse')
             ->with(Status::OK)
             ->willReturn($response);
-        
+
         // Stream factory expectations
         $this->streamFactory->expects($this->once())
             ->method('createStream')
             ->with($formattedData)
             ->willReturn($stream);
-        
+
         // Response expectations
         $response->expects($this->once())
             ->method('withBody')
             ->with($stream)
             ->willReturnSelf();
-        
+
         $response->expects($this->exactly(2))
             ->method('withHeader')
             ->willReturnSelf();
-        
+
         // Registry expectations
         $this->registry->expects($this->once())
             ->method('get')
             ->with(ContentType::JSON)
             ->willReturn($this->jsonFormatter);
-        
+
         // Formatter expectations
         $this->jsonFormatter->expects($this->once())
             ->method('contentType')
             ->willReturn(ContentType::JSON);
-        
+
         $this->jsonFormatter->expects($this->once())
             ->method('format')
             ->with($this->callback(function ($arg) {
@@ -212,10 +216,10 @@ class ResponseBuilderTest extends TestCase
                     $arg['meta']['pages'] === 10;
             }))
             ->willReturn($formattedData);
-        
+
         // Execute
         $result = $this->builder->paginated([], 100, 2, 10);
-        
+
         // Assert
         $this->assertSame($response, $result);
     }

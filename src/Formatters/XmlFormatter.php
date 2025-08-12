@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace LaqueResponses\Formatters;
 
+use DOMDocument;
+use DOMElement;
 use LaqueResponses\Contracts\ResponseFormatterInterface;
 use LaqueResponses\Support\ArrayUtils;
 use RuntimeException;
-use DOMDocument;
-use DOMElement;
 
 /**
  * Formats data as XML
@@ -42,35 +42,35 @@ final class XmlFormatter implements ResponseFormatterInterface
         // Create XML document
         $document = new DOMDocument('1.0', $this->encoding);
         $document->formatOutput = true;
-        
+
         // Prevent XXE attacks by disabling external entities
         $document->substituteEntities = false;
-        
+
         // Create root element
         $root = $document->createElement($this->rootElementName);
         $document->appendChild($root);
-        
+
         // Convert objects to arrays recursively
         if (is_object($payload)) {
             $payload = ArrayUtils::objectToArray($payload);
         }
-        
+
         // Add payload to XML
         $this->addXmlElement($document, $root, $payload);
-        
+
         // Return XML string
         $xml = $document->saveXML();
-        
+
         if ($xml === false) {
             throw new RuntimeException('XML generation failed');
         }
-        
+
         return $xml;
     }
-    
+
     /**
      * Add an element to the XML document
-     * 
+     *
      * @param DOMDocument $document
      * @param DOMElement $parent
      * @param mixed $data
@@ -86,7 +86,7 @@ final class XmlFormatter implements ResponseFormatterInterface
                 if ($key !== null) {
                     $element = $document->createElement($this->sanitizeElementName($key));
                     $parent->appendChild($element);
-                    
+
                     foreach ($data as $childKey => $childValue) {
                         $this->addXmlElement($document, $element, $childValue, (string) $childKey);
                     }
@@ -101,14 +101,14 @@ final class XmlFormatter implements ResponseFormatterInterface
                 if ($key !== null) {
                     // For numeric arrays, use singular form of parent as item name
                     $itemName = $this->getSingular($key);
-                    
+
                     foreach ($data as $item) {
                         $this->addXmlElement($document, $parent, $item, $itemName);
                     }
                 } else {
                     // Default item name if no key provided
                     $itemName = 'item';
-                    
+
                     foreach ($data as $item) {
                         $this->addXmlElement($document, $parent, $item, $itemName);
                     }
@@ -119,7 +119,7 @@ final class XmlFormatter implements ResponseFormatterInterface
             if ($key !== null) {
                 $element = $document->createElement($this->sanitizeElementName($key));
                 $parent->appendChild($element);
-                
+
                 if ($data !== null) {
                     // Convert to string and add as text node
                     $textNode = $document->createTextNode($this->formatValue($data));
@@ -132,10 +132,10 @@ final class XmlFormatter implements ResponseFormatterInterface
             }
         }
     }
-    
+
     /**
      * Format a scalar value for XML
-     * 
+     *
      * @param mixed $value
      * @return string
      */
@@ -144,34 +144,34 @@ final class XmlFormatter implements ResponseFormatterInterface
         if ($value === null) {
             return '';
         }
-        
+
         if (is_bool($value)) {
             return $value ? 'true' : 'false';
         }
-        
+
         return (string) $value;
     }
-    
+
     /**
      * Sanitize a string to be a valid XML element name
-     * 
+     *
      * @param string $name
      * @return string
      */
     private function sanitizeElementName(string $name): string
     {
         // XML element names must start with a letter or underscore
-        if (!preg_match('/^[a-z_]/i', $name)) {
+        if (! preg_match('/^[a-z_]/i', $name)) {
             $name = 'item_' . $name;
         }
-        
+
         // Replace invalid characters with underscores
         return preg_replace('/[^a-z0-9_\-\.]/i', '_', $name);
     }
-    
+
     /**
      * Get singular form of a word (very simple implementation)
-     * 
+     *
      * @param string $word
      * @return string
      */
@@ -181,11 +181,11 @@ final class XmlFormatter implements ResponseFormatterInterface
         if (str_ends_with($word, 'ies')) {
             return substr($word, 0, -3) . 'y';
         }
-        
+
         if (str_ends_with($word, 's')) {
             return substr($word, 0, -1);
         }
-        
+
         return $word;
     }
 }

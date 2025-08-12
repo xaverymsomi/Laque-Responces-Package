@@ -35,17 +35,17 @@ final class TextFormatter implements ResponseFormatterInterface
         if ($payload === null) {
             return '';
         }
-        
+
         if (is_scalar($payload)) {
             return (string) $payload;
         }
-        
+
         $text = print_r($payload, true);
-        
+
         if (strlen($text) > $this->maxLength) {
             $text = substr($text, 0, $this->maxLength) . '... [truncated]';
         }
-        
+
         return $text;
     }
 }

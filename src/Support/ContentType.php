@@ -31,20 +31,20 @@ final class ContentType
      */
     public static function withCharset(string $contentType, string $charset = 'utf-8'): string
     {
-        if (strpos($contentType, 'charset=') !== false) {
+        if (str_contains($contentType, 'charset=')) {
             return $contentType;
         }
-        
+
         return "{$contentType}; charset={$charset}";
     }
-    
+
     /**
      * Determine content type for a file path based on extension
      */
     public static function fromFilePath(string $path): string
     {
         $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-        
+
         return match($extension) {
             'json' => self::JSON,
             'txt' => self::TEXT,

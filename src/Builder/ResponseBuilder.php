@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace LaqueResponses\Builder;
 
-use LaqueResponses\Contracts\ResponseFormatterInterface;
 use LaqueResponses\Negotiation\AcceptHeaderNegotiator;
 use LaqueResponses\Registry\FormatterRegistry;
 use LaqueResponses\Support\ContentType;
@@ -63,40 +62,40 @@ final class ResponseBuilder
     ): ResponseInterface {
         // Determine content type
         $effectiveContentType = $contentType ?? $this->defaultContentType;
-        
+
         // Get formatter for the content type
         $formatter = $this->registry->get($effectiveContentType);
-        
+
         if ($formatter === null) {
             throw new RuntimeException("No formatter available for content type: {$effectiveContentType}");
         }
-        
+
         // Format the payload
         $formattedBody = $formatter->format($payload);
-        
+
         // Create response with status code
         $response = $this->responseFactory->createResponse($status);
-        
+
         // Create body stream
         $body = $this->streamFactory->createStream($formattedBody);
-        
+
         // Set body and Content-Type header
         $response = $response
             ->withBody($body)
             ->withHeader(Headers::CONTENT_TYPE, $formatter->contentType());
-        
+
         // Set default cache control if not in headers
-        if (!isset($headers[Headers::CACHE_CONTROL])) {
+        if (! isset($headers[Headers::CACHE_CONTROL])) {
             $response = $response->withHeader(Headers::CACHE_CONTROL, $this->defaultCacheControl);
         }
-        
+
         // Add all other headers
         foreach ($headers as $name => $value) {
             // Skip if we've already set this header
             if ($name === Headers::CONTENT_TYPE) {
                 continue;
             }
-            
+
             if (is_array($value)) {
                 foreach ($value as $v) {
                     if (Headers::isSafe($v)) {
@@ -107,13 +106,13 @@ final class ResponseBuilder
                 $response = $response->withHeader($name, $value);
             }
         }
-        
+
         return $response;
     }
 
     /**
      * Create a success response
-     * 
+     *
      * @param mixed $data Response data
      * @param int $status HTTP status code
      * @param string|null $contentType Content type (if null, uses Accept header or default)
@@ -123,15 +122,15 @@ final class ResponseBuilder
     {
         $payload = [
             'status' => 'success',
-            'data' => $data
+            'data' => $data,
         ];
-        
+
         return $this->make($payload, $status, $contentType);
     }
 
     /**
      * Create an error response
-     * 
+     *
      * @param string $message Error message
      * @param int $status HTTP status code
      * @param array<string,mixed> $errors Additional error details
@@ -146,19 +145,19 @@ final class ResponseBuilder
     ): ResponseInterface {
         $payload = [
             'status' => 'error',
-            'message' => $message
+            'message' => $message,
         ];
-        
-        if (!empty($errors)) {
+
+        if (! empty($errors)) {
             $payload['errors'] = $errors;
         }
-        
+
         return $this->make($payload, $status, $contentType);
     }
 
     /**
      * Create a paginated response
-     * 
+     *
      * @param array<mixed> $items Items for the current page
      * @param int $total Total number of items
      * @param int $page Current page number (1-based)
@@ -177,27 +176,27 @@ final class ResponseBuilder
         $total = max(0, $total);
         $page = max(1, $page);
         $perPage = max(1, $perPage);
-        
+
         // Calculate number of pages
         $pages = $total > 0 ? (int) ceil($total / $perPage) : 0;
-        
+
         $payload = [
             'status' => 'success',
             'meta' => [
                 'total' => $total,
                 'page' => $page,
                 'per_page' => $perPage,
-                'pages' => $pages
+                'pages' => $pages,
             ],
-            'data' => $items
+            'data' => $items,
         ];
-        
+
         return $this->make($payload, Status::OK, $contentType);
     }
 
     /**
      * Create a 201 Created response with Location header
-     * 
+     *
      * @param string|UriInterface $location URI of the created resource
      * @param mixed $data Response data
      * @param string|null $contentType Content type (if null, uses Accept header or default)
@@ -207,19 +206,19 @@ final class ResponseBuilder
     {
         $payload = [
             'status' => 'success',
-            'data' => $data
+            'data' => $data,
         ];
-        
+
         $headers = [
-            Headers::LOCATION => (string) $location
+            Headers::LOCATION => (string) $location,
         ];
-        
+
         return $this->make($payload, Status::CREATED, $contentType, $headers);
     }
 
     /**
      * Create a 204 No Content response
-     * 
+     *
      * @return ResponseInterface The PSR-7 response
      */
     public function noContent(): ResponseInterface
@@ -230,7 +229,7 @@ final class ResponseBuilder
 
     /**
      * Create a problem details response per RFC 9457
-     * 
+     *
      * @param string $type URI reference that identifies the problem type
      * @param string $title Short human-readable summary of the problem type
      * @param int $status HTTP status code
@@ -252,20 +251,20 @@ final class ResponseBuilder
             'title' => $title,
             'status' => $status,
         ];
-        
+
         if ($detail !== null) {
             $problem['detail'] = $detail;
         }
-        
+
         if ($instance !== null) {
             $problem['instance'] = $instance;
         }
-        
+
         // Add extensions as top-level properties
         foreach ($extensions as $key => $value) {
             $problem[$key] = $value;
         }
-        
+
         return $this->make($problem, $status, ContentType::PROBLEM_JSON);
     }
 }

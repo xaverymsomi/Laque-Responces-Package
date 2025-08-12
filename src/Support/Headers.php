@@ -34,13 +34,14 @@ final class Headers
     {
         $disposition = $inline ? 'inline' : 'attachment';
         $asciiFilename = preg_replace('/[^\x20-\x7E]/', '_', $filename);
-        
+
         if ($asciiFilename === $filename) {
             return "{$disposition}; filename=\"{$filename}\"";
         }
-        
+
         // For filenames with non-ASCII characters, provide both forms
         $encodedFilename = rawurlencode($filename);
+
         return "{$disposition}; filename=\"{$asciiFilename}\"; filename*=UTF-8''{$encodedFilename}";
     }
 
@@ -49,7 +50,7 @@ final class Headers
      */
     public static function isSafe(string $value): bool
     {
-        return !preg_match('/[\r\n]/', $value);
+        return ! preg_match('/[\r\n]/', $value);
     }
 
     /**
@@ -64,23 +65,23 @@ final class Headers
         if ($noStore) {
             return 'no-store';
         }
-        
+
         $directives = [];
-        
+
         if ($public) {
             $directives[] = 'public';
         } else {
             $directives[] = 'private';
         }
-        
+
         if ($maxAge !== null) {
             $directives[] = "max-age={$maxAge}";
         }
-        
+
         if ($mustRevalidate) {
             $directives[] = 'must-revalidate';
         }
-        
+
         return implode(', ', $directives);
     }
 }

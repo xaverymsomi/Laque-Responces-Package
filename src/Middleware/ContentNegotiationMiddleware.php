@@ -46,17 +46,17 @@ final class ContentNegotiationMiddleware implements MiddlewareInterface
     ): ResponseInterface {
         // Get Accept header from request
         $acceptHeader = $request->getHeaderLine(Headers::ACCEPT);
-        
+
         // If no Accept header, use default and forward
         if (empty($acceptHeader)) {
             return $handler->handle(
                 $request->withAttribute($this->requestAttributeName, $this->defaultContentType)
             );
         }
-        
+
         // Negotiate content type
         $contentType = $this->negotiator->negotiate($acceptHeader, $this->registry);
-        
+
         // If no match and strict mode, return 406 Not Acceptable
         if ($contentType === null && $this->strict406) {
             return $this->responseFactory
@@ -66,10 +66,10 @@ final class ContentNegotiationMiddleware implements MiddlewareInterface
                     'Not Acceptable: Supported content types: ' . implode(', ', $this->registry->supported())
                 ));
         }
-        
+
         // Use default content type if no match
         $effectiveContentType = $contentType ?? $this->defaultContentType;
-        
+
         // Add negotiated content type as request attribute and forward
         return $handler->handle(
             $request->withAttribute($this->requestAttributeName, $effectiveContentType)

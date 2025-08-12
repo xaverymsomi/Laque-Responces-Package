@@ -39,21 +39,21 @@ final class JsonFormatter implements ResponseFormatterInterface
     public function format(array|object|string|int|float|bool|null $payload): string
     {
         $flags = $this->jsonFlags;
-        
+
         if ($this->prettyPrint) {
             $flags |= JSON_PRETTY_PRINT;
         }
-        
+
         $json = json_encode($payload, $flags);
-        
+
         if (json_last_error() !== JSON_ERROR_NONE) {
             throw new RuntimeException('JSON encoding failed: ' . json_last_error_msg());
         }
-        
+
         if ($this->checkNumeric && is_string($json) && $json === 'NaN' || $json === 'INF' || $json === '-INF') {
             throw new RuntimeException('Invalid numeric value detected: ' . $json);
         }
-        
+
         return $json;
     }
 }

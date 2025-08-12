@@ -11,37 +11,33 @@ use LaqueResponses\Contracts\ResponseFormatterInterface;
  */
 final class FormatterRegistry
 {
-    /**
-     * @var array<string, ResponseFormatterInterface> Formatters indexed by content type
-     */
+    /** @var array<string, ResponseFormatterInterface> */
     private array $formatters = [];
 
-    /**
-     * Register a formatter
-     */
     public function register(ResponseFormatterInterface $formatter): void
     {
-        $this->formatters[$formatter->contentType()] = $formatter;
+        $key = $this->normalize($formatter->contentType());
+        $this->formatters[$key] = $formatter;
     }
 
-    /**
-     * Get a formatter for a specific content type
-     */
     public function get(string $contentType): ?ResponseFormatterInterface
     {
-        // Support content type with parameters like "application/json; charset=utf-8"
-        $baseType = explode(';', $contentType)[0];
-        
-        return $this->formatters[$baseType] ?? null;
+        $key = $this->normalize($contentType);
+
+        return $this->formatters[$key] ?? null;
     }
 
-    /**
-     * Get list of supported content types
-     * 
-     * @return list<string>
-     */
+    /** @return list<string> */
     public function supported(): array
     {
         return array_keys($this->formatters);
+    }
+
+    private function normalize(string $type): string
+    {
+        $t = strtolower(trim($type));
+        $semi = strpos($t, ';');
+
+        return $semi === false ? $t : substr($t, 0, $semi);
     }
 }
